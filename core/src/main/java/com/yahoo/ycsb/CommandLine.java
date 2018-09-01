@@ -224,6 +224,19 @@ public final class CommandLine {
         props.put(CoreWorkload.TABLENAME_PROPERTY, args[argindex]);
 
         argindex++;
+      } else if (args[argindex].compareTo("-src") == 0) {
+//        System.out.println("-src running...");
+        argindex++;
+        if (argindex >= args.length) {
+          usageMessage();
+          System.out.println("Missing argument value for -src. ");
+          System.exit(0);
+        }
+        String path = args[argindex];
+        props.put("src", path);
+        argindex++;
+
+
       } else {
         System.out.println("Unknown option " + args[argindex]);
         usageMessage();

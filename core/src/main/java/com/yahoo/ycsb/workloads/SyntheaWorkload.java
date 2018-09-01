@@ -1,26 +1,8 @@
-/**
- * Copyright (c) 2010 Yahoo! Inc., Copyright (c) 2016-2017 YCSB contributors. All rights reserved.
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License"); you
- * may not use this file except in compliance with the License. You
- * may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- * implied. See the License for the specific language governing
- * permissions and limitations under the License. See accompanying
- * LICENSE file.
- */
-
 package com.yahoo.ycsb.workloads;
 
 import com.yahoo.ycsb.*;
 import com.yahoo.ycsb.generator.*;
 import com.yahoo.ycsb.measurements.Measurements;
-import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.File;
@@ -66,7 +48,7 @@ import java.util.*;
  * order ("hashed") (default: hashed)
  * </ul>
  */
-public class CoreWorkload extends Workload {
+public class SyntheaWorkload extends Workload {
   /**
    * The name of the database table to run queries against.
    */
@@ -403,8 +385,8 @@ public class CoreWorkload extends Workload {
       try {
         String content = new String(Files.readAllBytes(file.toPath()), "UTF-8");
         ObjectMapper mapper = new ObjectMapper();
-//        mapper.readTree(content);
-        dataSet.add(mapper.readValue(content, JsonNode.class).toString());
+        mapper.readTree(content);
+        dataSet.add(content);
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -661,20 +643,20 @@ public class CoreWorkload extends Workload {
     }
 
     switch (operation) {
-    case "READ":
-      doTransactionRead(db);
-      break;
-    case "UPDATE":
-      doTransactionUpdate(db);
-      break;
-    case "INSERT":
-      doTransactionInsert(db);
-      break;
-    case "SCAN":
-      doTransactionScan(db);
-      break;
-    default:
-      doTransactionReadModifyWrite(db);
+      case "READ":
+        doTransactionRead(db);
+        break;
+      case "UPDATE":
+        doTransactionUpdate(db);
+        break;
+      case "INSERT":
+        doTransactionInsert(db);
+        break;
+      case "SCAN":
+        doTransactionScan(db);
+        break;
+      default:
+        doTransactionReadModifyWrite(db);
     }
 
     return true;
@@ -763,21 +745,20 @@ public class CoreWorkload extends Workload {
       fields.add(fieldname);
     }
 
-    HashMap<String, ByteIterator> values = buildValues(keyname);
+    HashMap<String, ByteIterator> values;
 
-//    if (writeallfields) {
-//      // new data for all the fields
-//      values = buildValues(keyname);
-//    } else {
-//      // update a random field
-//      values = buildSingleValue(keyname);
-//    }
+    if (writeallfields) {
+      // new data for all the fields
+      values = buildValues(keyname);
+    } else {
+      // update a random field
+      values = buildSingleValue(keyname);
+    }
 
     // do the transaction
 
     HashMap<String, ByteIterator> cells = new HashMap<String, ByteIterator>();
 
-    System.out.println("doTransactionReadModifyWrite");
 
     long ist = measurements.getIntendedtartTimeNs();
     long st = System.nanoTime();
@@ -823,17 +804,15 @@ public class CoreWorkload extends Workload {
 
     String keyname = buildKeyName(keynum);
 
-    HashMap<String, ByteIterator> values = buildValues(keyname);
+    HashMap<String, ByteIterator> values;
 
-//    if (writeallfields) {
-//      // new data for all the fields
-//      values = buildValues(keyname);
-//    } else {
-//      // update a random field
-//      values = buildSingleValue(keyname);
-//    }
-
-//    System.out.println("doTransactionUpdate: " + values);
+    if (writeallfields) {
+      // new data for all the fields
+      values = buildValues(keyname);
+    } else {
+      // update a random field
+      values = buildSingleValue(keyname);
+    }
 
     db.update(table, keyname, values);
   }
@@ -899,4 +878,5 @@ public class CoreWorkload extends Workload {
     }
     return operationchooser;
   }
+
 }

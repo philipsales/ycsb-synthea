@@ -1061,6 +1061,18 @@ public final class Client {
 
           fileprops.setProperty(prop, myfileprops.getProperty(prop));
         }
+      } else if (args[argindex].compareTo("-src") == 0) {
+//        System.out.println("-src running...");
+        argindex++;
+        if (argindex >= args.length) {
+          usageMessage();
+          System.out.println("Missing argument value for -src. ");
+          System.exit(0);
+        }
+        String path = args[argindex];
+        props.put("src", path);
+        argindex++;
+
 
       } else if (args[argindex].compareTo("-p") == 0) {
         argindex++;

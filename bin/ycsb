@@ -108,6 +108,7 @@ DATABASES = {
 OPTIONS = {
     "-P file"        : "Specify workload file",
     "-p key=value"   : "Override workload property",
+    "-src directory" : "Path to files to upload",
     "-s"             : "Print status to stderr",
     "-target n"      : "Target ops/sec (default: unthrottled)",
     "-threads n"     : "Number of client threads (default: 1)",
@@ -210,12 +211,13 @@ def is_distribution():
 def get_classpath_from_maven(module):
     try:
         debug("Running 'mvn -pl com.yahoo.ycsb:" + module + " -am package -DskipTests "
-              "dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'")
+              "dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true -Dcheckstyle.skip'")
         mvn_output = check_output(["mvn", "-pl", "com.yahoo.ycsb:" + module,
                                    "-am", "package", "-DskipTests",
                                    "dependency:build-classpath",
                                    "-DincludeScope=compile",
-                                   "-Dmdep.outputFilterFile=true"])
+                                   "-Dmdep.outputFilterFile=true",
+                                   "-Dcheckstyle.skip"])
         # the above outputs a "classpath=/path/tojar:/path/to/other/jar" for each module
         # the last module will be the datastore binding
         line = [x for x in mvn_output.splitlines() if x.startswith("classpath=")][-1:]

@@ -45,6 +45,7 @@ import com.yahoo.ycsb.Status;
 
 import org.bson.Document;
 import org.bson.types.Binary;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -110,6 +111,8 @@ public class MongoDbClient extends DB {
 
   /** The bulk inserts pending for the thread. */
   private final List<Document> bulkInserts = new ArrayList<Document>();
+
+  private ObjectMapper mapper = new ObjectMapper();
 
   /**
    * Cleanup any state for this DB. Called once per DB instance; there is one DB
@@ -256,7 +259,8 @@ public class MongoDbClient extends DB {
       MongoCollection<Document> collection = database.getCollection(table);
       Document toInsert = new Document("_id", key);
       for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
-        toInsert.put(entry.getKey(), entry.getValue().toArray());
+        Map<String, Object> val = mapper.readValue(entry.getValue().toString(), Map.class);
+        toInsert.putAll(val);
       }
 
       if (batchSize == 1) {

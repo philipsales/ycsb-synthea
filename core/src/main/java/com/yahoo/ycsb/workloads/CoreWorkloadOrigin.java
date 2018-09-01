@@ -19,13 +19,10 @@ package com.yahoo.ycsb.workloads;
 
 import com.yahoo.ycsb.*;
 import com.yahoo.ycsb.generator.*;
+import com.yahoo.ycsb.generator.UniformLongGenerator;
 import com.yahoo.ycsb.measurements.Measurements;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.*;
 
 /**
@@ -66,7 +63,7 @@ import java.util.*;
  * order ("hashed") (default: hashed)
  * </ul>
  */
-public class CoreWorkload extends Workload {
+public class CoreWorkloadOrigin extends Workload {
   /**
    * The name of the database table to run queries against.
    */
@@ -142,17 +139,6 @@ public class CoreWorkload extends Workload {
    * start with "FIELD_LENGTH_".
    */
   protected NumberGenerator fieldlengthgenerator;
-
-  /**
-   * Set of Synthea files to be upserted
-   */
-  private List<String> dataSet = new ArrayList<>();
-
-  /**
-   * Index of data set to be upserted
-   */
-  private int jsonCounter = 0;
-
 
   /**
    * The name of the property for deciding whether to read one field (false) or all fields (true) of
@@ -394,22 +380,6 @@ public class CoreWorkload extends Workload {
    */
   @Override
   public void init(Properties p) throws WorkloadException {
-    File dir = new File(p.getProperty("src"));
-    File[] files = dir.listFiles();
-    if (null == files)
-      throw new WorkloadException("Nothing to insert...");
-
-    for (File file : files) {
-      try {
-        String content = new String(Files.readAllBytes(file.toPath()), "UTF-8");
-        ObjectMapper mapper = new ObjectMapper();
-//        mapper.readTree(content);
-        dataSet.add(mapper.readValue(content, JsonNode.class).toString());
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
-
     table = p.getProperty(TABLENAME_PROPERTY, TABLENAME_PROPERTY_DEFAULT);
 
     fieldcount =
@@ -569,20 +539,16 @@ public class CoreWorkload extends Workload {
   private HashMap<String, ByteIterator> buildValues(String key) {
     HashMap<String, ByteIterator> values = new HashMap<>();
 
-//    for (String fieldkey : fieldnames) {
-//      ByteIterator data;
-//      if (dataintegrity) {
-//        data = new StringByteIterator(buildDeterministicValue(key, fieldkey));
-//      } else {
-//        // fill with random data
-//        data = new RandomByteIterator(fieldlengthgenerator.nextValue().longValue());
-//      }
-//      values.put(fieldkey, data);
-//    }
-
-    String json = dataSet.get(jsonCounter++);
-    values.put("patient", new StringByteIterator(json));
-
+    for (String fieldkey : fieldnames) {
+      ByteIterator data;
+      if (dataintegrity) {
+        data = new StringByteIterator(buildDeterministicValue(key, fieldkey));
+      } else {
+        // fill with random data
+        data = new RandomByteIterator(fieldlengthgenerator.nextValue().longValue());
+      }
+      values.put(fieldkey, data);
+    }
     return values;
   }
 
@@ -661,20 +627,20 @@ public class CoreWorkload extends Workload {
     }
 
     switch (operation) {
-    case "READ":
-      doTransactionRead(db);
-      break;
-    case "UPDATE":
-      doTransactionUpdate(db);
-      break;
-    case "INSERT":
-      doTransactionInsert(db);
-      break;
-    case "SCAN":
-      doTransactionScan(db);
-      break;
-    default:
-      doTransactionReadModifyWrite(db);
+      case "READ":
+        doTransactionRead(db);
+        break;
+      case "UPDATE":
+        doTransactionUpdate(db);
+        break;
+      case "INSERT":
+        doTransactionInsert(db);
+        break;
+      case "SCAN":
+        doTransactionScan(db);
+        break;
+      default:
+        doTransactionReadModifyWrite(db);
     }
 
     return true;
@@ -763,21 +729,20 @@ public class CoreWorkload extends Workload {
       fields.add(fieldname);
     }
 
-    HashMap<String, ByteIterator> values = buildValues(keyname);
+    HashMap<String, ByteIterator> values;
 
-//    if (writeallfields) {
-//      // new data for all the fields
-//      values = buildValues(keyname);
-//    } else {
-//      // update a random field
-//      values = buildSingleValue(keyname);
-//    }
+    if (writeallfields) {
+      // new data for all the fields
+      values = buildValues(keyname);
+    } else {
+      // update a random field
+      values = buildSingleValue(keyname);
+    }
 
     // do the transaction
 
     HashMap<String, ByteIterator> cells = new HashMap<String, ByteIterator>();
 
-    System.out.println("doTransactionReadModifyWrite");
 
     long ist = measurements.getIntendedtartTimeNs();
     long st = System.nanoTime();
@@ -823,17 +788,15 @@ public class CoreWorkload extends Workload {
 
     String keyname = buildKeyName(keynum);
 
-    HashMap<String, ByteIterator> values = buildValues(keyname);
+    HashMap<String, ByteIterator> values;
 
-//    if (writeallfields) {
-//      // new data for all the fields
-//      values = buildValues(keyname);
-//    } else {
-//      // update a random field
-//      values = buildSingleValue(keyname);
-//    }
-
-//    System.out.println("doTransactionUpdate: " + values);
+    if (writeallfields) {
+      // new data for all the fields
+      values = buildValues(keyname);
+    } else {
+      // update a random field
+      values = buildSingleValue(keyname);
+    }
 
     db.update(table, keyname, values);
   }
