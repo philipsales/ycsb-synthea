@@ -403,10 +403,10 @@ public class CoreWorkload extends Workload {
       try {
         String content = new String(Files.readAllBytes(file.toPath()), "UTF-8");
         ObjectMapper mapper = new ObjectMapper();
-//        mapper.readTree(content);
+        mapper.readTree(content);
         dataSet.add(mapper.readValue(content, JsonNode.class).toString());
       } catch (IOException e) {
-        e.printStackTrace();
+        //e.printStackTrace();
       }
     }
 
